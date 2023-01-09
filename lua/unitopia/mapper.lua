@@ -7,6 +7,8 @@ class.Mapper()
 function Mapper:_init()
   -- LastDirection is used to calculate the new coordinates
   self.LastDirection = nil
+  -- Modes (0 = off, 1 = read, 2 = write)
+  self.Mode = 0
   -- Coordinates
   self.X = 1000000
   self.Y = 1000000
@@ -36,10 +38,16 @@ function Mapper:_init()
     world.Note("Mapper: Error preparing insert statement")
     return
   end
+  -- Add alias
+  check(world.AddAlias("Mapper_Do", "map *", 'Mapper:Do("%1")', alias_flag.Enabled))
+  check(world.SetAliasOption("Mapper_Do","send_to",12))
   world.Note("Mapper:_init done")
 end
 
-function Mapper:InsertRoom(roomInfo)
+function Mapper:ChangeRoom(roomInfo)
+  if self.Mode == 0 then
+    return
+  end
   if self.LastDirection == nil then
     world.Note("Mapper: Last direction is unknown")
     return
@@ -59,25 +67,44 @@ function Mapper:InsertRoom(roomInfo)
   elseif self.LastDirection:find("r", 1, true) then
     self.Z = self.Z - 1
   end
-  local exits = ""
-  for key, value in pairs(roomInfo.exits) do
-    exits = exits .. key .. "=" .. value .. ","
+  if self.Mode == 2 then
+    local exits = ""
+    for key, value in pairs(roomInfo.exits) do
+      exits = exits .. key .. "=" .. value .. ","
+    end
+    if self.Insert:bind(1, roomInfo.domain) ~= sqlite3.OK
+      or self.Insert:bind(2, self.X) ~= sqlite3.OK
+      or self.Insert:bind(3, self.Y) ~= sqlite3.OK
+      or self.Insert:bind(4, self.Z) ~= sqlite3.OK
+      or self.Insert:bind(5, roomInfo.name) ~= sqlite3.OK
+      or self.Insert:bind(6, exits) ~= sqlite3.OK then
+      world.Note("Mapper: Error binding parameters")
+      return
+    end
+    if self.Insert:step() ~= sqlite3.DONE then
+      world.Note("Mapper: Error inserting room")
+      return
+    end
+    self.Insert:reset()
   end
-  if self.Insert:bind(1, roomInfo.domain) ~= sqlite3.OK
-    or self.Insert:bind(2, self.X) ~= sqlite3.OK
-    or self.Insert:bind(3, self.Y) ~= sqlite3.OK
-    or self.Insert:bind(4, self.Z) ~= sqlite3.OK
-    or self.Insert:bind(5, roomInfo.name) ~= sqlite3.OK
-    or self.Insert:bind(6, exits) ~= sqlite3.OK then
-    world.Note("Mapper: Error binding parameters")
-    return
-  end
-  if self.Insert:step() ~= sqlite3.DONE then
-    world.Note("Mapper: Error inserting room")
-    return
-  end
-  self.Insert:reset()
   self.LastDirection = nil
+end
+
+function Mapper:Do(command)
+  if command == "read" then
+    self.LastDirection = nil
+    self.Mode = 1
+    world.Note("Mapper: Read mode")
+  elseif command == "write" then
+    self.LastDirection = nil
+    self.Mode = 2
+    world.Note("Mapper: Write mode")
+  elseif command == "off" then
+    self.Mode = 0
+    world.Note("Mapper: Off")
+  else
+    world.Note("Mapper: Unknown command '" .. command .. "'")
+  end
 end
 
 return Mapper

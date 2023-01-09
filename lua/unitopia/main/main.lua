@@ -152,7 +152,7 @@ function OnUnitopiaRoomInfo(message, rawData)
   if info then
     info["domain"] = UmlautNormalizer:Normalize(info["domain"])
     info["name"] = UmlautNormalizer:Normalize(info["name"])
-    Mapper:InsertRoom(info)
+    Mapper:ChangeRoom(info)
     local domain, room = info["domain"], info["name"]
     local matchingArea = nil
 
@@ -407,7 +407,7 @@ function SpeakCurrentSpellpoints()
 end
 
 function Walk(direction)
-  if Mapper.LastDirection ~= nil then
+  if Mapper.Mode > 0 and Mapper.LastDirection ~= nil then
     return
   end
   Mapper.LastDirection = direction
