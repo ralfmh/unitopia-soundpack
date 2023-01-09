@@ -143,6 +143,14 @@
   >
   <send>OnUnitopiaProgress("%1")</send>
   </trigger>
+  <trigger
+  enabled="y"
+  match="Da geht's nicht weiter."
+  send_to="12"
+  sequence="100"
+  >
+  <send>Mapper.LastDirection = nil</send>
+  </trigger>
 
 </triggers>
 

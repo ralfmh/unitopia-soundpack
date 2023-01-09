@@ -94,6 +94,7 @@ function OnPluginConnect()
 
   CurrentBackgroundMusicBeingPlayed = PlayMusic("Misc/SoundpackStart.ogg", UserConfig.Settings.MusicVolume, false)
   InitializeHotkeys()
+  Mapper = require("unitopia.mapper")()
   InitializeNumPad()
 end
 
@@ -149,7 +150,10 @@ function OnUnitopiaRoomInfo(message, rawData)
   local info = Gmcp.GetById(message)
 
   if info then
-    local domain, room = UmlautNormalizer:Normalize(info["domain"]), UmlautNormalizer:Normalize(info["name"])
+    info["domain"] = UmlautNormalizer:Normalize(info["domain"])
+    info["name"] = UmlautNormalizer:Normalize(info["name"])
+    Mapper:InsertRoom(info)
+    local domain, room = info["domain"], info["name"]
     local matchingArea = nil
 
     if CurrentDomain ~= domain then
@@ -359,17 +363,17 @@ function InitializeHotkeys()
 end
 
 function InitializeNumPad()
-  world.Accelerator("Numpad1", "sw")
-  world.Accelerator("Numpad2", "s")
-  world.Accelerator("Numpad3", "so")
-  world.Accelerator("Numpad4", "w")
+  world.AcceleratorTo("Numpad1", 'Walk("sw")', sendto.script)
+  world.AcceleratorTo("Numpad2", 'Walk("s")', sendto.script)
+  world.AcceleratorTo("Numpad3", 'Walk("so")', sendto.script)
+  world.AcceleratorTo("Numpad4", 'Walk("w")', sendto.script)
   world.Accelerator("Numpad5", "betrachte")
-  world.Accelerator("Numpad6", "o")
-  world.Accelerator("Numpad7", "nw")
-  world.Accelerator("Numpad8", "n")
-  world.AcceleratorTo("Numpad9", 'world.Execute("no")', sendto.script)
-  world.Accelerator("Add", "r")
-  world.Accelerator("Subtract", "h")
+  world.AcceleratorTo("Numpad6", 'Walk("o")', sendto.script)
+  world.AcceleratorTo("Numpad7", 'Walk("nw")', sendto.script)
+  world.AcceleratorTo("Numpad8", 'Walk("n")', sendto.script)
+  world.AcceleratorTo("Numpad9", 'Walk("no")', sendto.script)
+  world.AcceleratorTo("Add", 'Walk("r")', sendto.script)
+  world.AcceleratorTo("Subtract", 'Walk("h")', sendto.script)
   world.AcceleratorTo("Divide", "SpeakCurrentHitpoints()", sendto.script)
   world.AcceleratorTo("Multiply", "SpeakCurrentSpellpoints()", sendto.script)
 end
@@ -400,4 +404,12 @@ function SpeakCurrentSpellpoints()
     return
   end
   world.Execute("tts_interrupt "..CurrentSpellpoints.." ZP")
+end
+
+function Walk(direction)
+  if Mapper.LastDirection ~= nil then
+    return
+  end
+  Mapper.LastDirection = direction
+  world.Execute(direction)
 end
