@@ -102,9 +102,46 @@ function Mapper:Do(command)
   elseif command == "off" then
     self.Mode = 0
     world.Note("Mapper: Off")
+  elseif command == "setpos" then
+    Mapper:SetPosition()
   else
     world.Note("Mapper: Unknown command '" .. command .. "'")
   end
+end
+
+function Mapper:SetPosition()
+  local input, newX, newY, newZ
+  input = utils.inputbox("X:", "Mapper", self.X)
+  if input == nil then
+    return
+  end
+  newX = tonumber(input)
+  if newX == nil or math.floor(newX) ~= newX then
+    world.Note("Mapper: Invalid input: "..input)
+    return
+  end
+  input = utils.inputbox("Y:", "Mapper", self.Y)
+  if input == nil then
+    return
+  end
+  newY = tonumber(input)
+  if newY == nil or math.floor(newY) ~= newY then
+    world.Note("Mapper: Invalid input: "..input)
+    return
+  end
+  input = utils.inputbox("Z:", "Mapper", self.Z)
+  if input == nil then
+    return
+  end
+  newZ = tonumber(input)
+  if newZ == nil or math.floor(newZ) ~= newZ then
+    world.Note("Mapper: Invalid input: "..input)
+    return
+  end
+  self.X = newX
+  self.Y = newY
+  self.Z = newZ
+  world.Note("Mapper: position set")
 end
 
 return Mapper
